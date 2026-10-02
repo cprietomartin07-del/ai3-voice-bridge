@@ -354,4 +354,200 @@ replace(manifest,
         <service android:name=".ui.HeyCyanKeepAliveService" android:exported="false" android:foregroundServiceType="connectedDevice" />
 """)
 
+
+# AI3-only build: replace Meta DAT integration with compile-safe stubs when the private
+# Meta Wearables GitHub package is unavailable. This does not affect HeyCyan/AI3 paths.
+meta_manager = ROOT / "android/CyanBridge/app/src/main/java/com/fersaiyan/cyanbridge/devices/metarayban/MetaRaybanManager.kt"
+meta_manager.write_text(r'''package com.fersaiyan.cyanbridge.devices.metarayban
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
+import java.io.File
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+/**
+ * AI3 build stub. Meta DAT requires a private GitHub package token and is intentionally
+ * unavailable in this dedicated W-AI3 Pro build.
+ */
+class MetaRaybanManager private constructor(private val context: Context) {
+    companion object {
+        @Volatile private var instance: MetaRaybanManager? = null
+        fun getInstance(context: Context): MetaRaybanManager =
+            instance ?: synchronized(this) {
+                instance ?: MetaRaybanManager(context.applicationContext).also { instance = it }
+            }
+    }
+
+    private val _isInitialized = MutableStateFlow(false)
+    val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
+    private val _registrationState = MutableStateFlow(RegistrationState.UNAVAILABLE)
+    val registrationState: StateFlow<RegistrationState> = _registrationState.asStateFlow()
+    private val _metaAccessState = MutableStateFlow(MetaAccessState.FAILED)
+    val metaAccessState: StateFlow<MetaAccessState> = _metaAccessState.asStateFlow()
+    private val _availableDeviceCount = MutableStateFlow(0)
+    val availableDeviceCount: StateFlow<Int> = _availableDeviceCount.asStateFlow()
+    private val _selectedDeviceName = MutableStateFlow<String?>(null)
+    val selectedDeviceName: StateFlow<String?> = _selectedDeviceName.asStateFlow()
+    private val _selectedDeviceIsDisplayCapable = MutableStateFlow(false)
+    val selectedDeviceIsDisplayCapable: StateFlow<Boolean> = _selectedDeviceIsDisplayCapable.asStateFlow()
+    private val _deviceSessionState = MutableStateFlow(DeviceSessionState.IDLE)
+    val deviceSessionState: StateFlow<DeviceSessionState> = _deviceSessionState.asStateFlow()
+    private val _streamState = MutableStateFlow(StreamState.STOPPED)
+    val streamState: StateFlow<StreamState> = _streamState.asStateFlow()
+    private val _isStreaming = MutableStateFlow(false)
+    val isStreaming: StateFlow<Boolean> = _isStreaming.asStateFlow()
+    private val _lastCapturedPhoto = MutableStateFlow<CapturedPhoto?>(null)
+    val lastCapturedPhoto: StateFlow<CapturedPhoto?> = _lastCapturedPhoto.asStateFlow()
+    private val _isDisplayActive = MutableStateFlow(false)
+    val isDisplayActive: StateFlow<Boolean> = _isDisplayActive.asStateFlow()
+    private val _lastError = MutableStateFlow<String?>(META_DISABLED)
+    val lastError: StateFlow<String?> = _lastError.asStateFlow()
+    private val _debugMockEnabled = MutableStateFlow(false)
+    val debugMockEnabled: StateFlow<Boolean> = _debugMockEnabled.asStateFlow()
+
+    fun isDebugMockEnabled(): Boolean = false
+    fun setDebugMockEnabled(enabled: Boolean) { _debugMockEnabled.value = false }
+    fun initialize() { _lastError.value = META_DISABLED }
+    fun startRegistration(activity: Activity) { _lastError.value = META_DISABLED }
+    fun startUnregistration(activity: Activity) { _lastError.value = META_DISABLED }
+    fun isRegistered(): Boolean = false
+    fun isCameraReady(): Boolean = false
+    suspend fun awaitCameraReady(timeoutMs: Long = 10_000L): Boolean = false
+    fun refreshRegistrationState() { _registrationState.value = RegistrationState.UNAVAILABLE }
+    fun handleRegistrationCallback(intent: Intent): Boolean = false
+
+    fun checkCameraPermission(
+        onGranted: () -> Unit,
+        onRequestNeeded: () -> Unit,
+        onError: (String) -> Unit,
+    ) = onError(META_DISABLED)
+
+    fun startSession(onSuccess: () -> Unit, onError: (String) -> Unit) = onError(META_DISABLED)
+    fun stopSession() { _deviceSessionState.value = DeviceSessionState.IDLE }
+    fun startStreaming(
+        onFrame: (Bitmap) -> Unit,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) = onError(META_DISABLED)
+    fun stopStreaming() {
+        _isStreaming.value = false
+        _streamState.value = StreamState.STOPPED
+    }
+
+    fun capturePhoto(onSuccess: (CapturedPhoto) -> Unit, onError: (String) -> Unit) =
+        onError(META_DISABLED)
+
+    suspend fun capturePhotoOnce(timeoutMs: Long = 20_000L): CapturedPhoto =
+        throw IllegalStateException(META_DISABLED)
+
+    suspend fun savePhotoForProcessing(photo: CapturedPhoto, namePrefix: String): File =
+        throw IllegalStateException(META_DISABLED)
+
+    fun startDisplay(onSuccess: () -> Unit, onError: (String) -> Unit) = onError(META_DISABLED)
+    fun stopDisplay() { _isDisplayActive.value = false }
+    fun reportExternalError(operation: String, message: String): String =
+        "$operation: $message"
+    fun diagnosticsSnapshot(): String = META_DISABLED
+    fun registrationGuidance(): String? = META_DISABLED
+    fun installedMetaAiPackageName(): String? = null
+    fun isMetaAiInstalled(): Boolean = false
+    fun destroy() { instance = null }
+
+    data class CapturedPhoto(
+        val bytes: ByteArray,
+        val mimeType: String,
+        val uri: Uri?,
+    )
+
+    enum class RegistrationState {
+        UNAVAILABLE, AVAILABLE, REGISTERED, REGISTERING, UNREGISTERING,
+    }
+
+    enum class DeviceSessionState {
+        IDLE, STARTING, STARTED, PAUSED, STOPPING, STOPPED,
+    }
+
+    enum class StreamState {
+        STOPPED, STARTING, STARTED, STREAMING, STOPPING, PAUSED, CLOSED,
+    }
+
+    private companion object Constants {
+        const val META_DISABLED = "Meta DAT disabled in CyanBridge AI3 build"
+    }
+}
+''')
+
+# Keep the class name referenced by navigation/manifest without pulling private Meta SDK types.
+meta_pairing = ROOT / "android/CyanBridge/app/src/main/java/com/fersaiyan/cyanbridge/ui/MetaPairingActivity.kt"
+meta_pairing.write_text(r'''package com.fersaiyan.cyanbridge.ui
+
+import android.os.Bundle
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+
+class MetaPairingActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(TextView(this).apply {
+            text = "Meta Ray-Ban support is disabled in this W-AI3 Pro build."
+            textSize = 18f
+            setPadding(48, 72, 48, 48)
+        })
+    }
+}
+''')
+
+# Community plugins are not part of the dedicated AI3 runtime. Keep the navigation target.
+community = ROOT / "android/CyanBridge/app/src/main/java/com/fersaiyan/cyanbridge/ui/CommunityPluginsActivity.kt"
+community.write_text(r'''package com.fersaiyan.cyanbridge.ui
+
+import android.os.Bundle
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+
+class CommunityPluginsActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(TextView(this).apply {
+            text = "Community plugins are disabled in this dedicated W-AI3 Pro build."
+            textSize = 18f
+            setPadding(48, 72, 48, 48)
+        })
+    }
+}
+''')
+
+# MainActivity has only one direct Meta permission contract; route it through the stub manager.
+main_path = ROOT / "android/CyanBridge/app/src/main/java/com/fersaiyan/cyanbridge/MainActivity.kt"
+main_text = main_path.read_text()
+main_text = main_text.replace("import com.meta.wearable.dat.core.Wearables\\n", "")
+main_text = main_text.replace("import com.meta.wearable.dat.core.types.Permission\\n", "")
+main_text = main_text.replace("import com.meta.wearable.dat.core.types.PermissionStatus\\n", "")
+start = main_text.find("    private val metaWearablePermissionLauncher =")
+end_marker = "    // Transcription UI moved to the \\"Transcriptions & recordings\\" section"
+if start >= 0:
+    end = main_text.find(end_marker, start)
+    if end < 0:
+        raise SystemExit("Meta permission launcher end marker not found")
+    main_text = main_text[:start] + main_text[end:]
+main_text = main_text.replace(
+    """                onRequestNeeded = {
+                    pendingMetaCameraAction = action
+                    metaWearablePermissionLauncher.launch(Permission.CAMERA)
+                },""",
+    """                onRequestNeeded = {
+                    pendingMetaCameraAction = null
+                    showMetaError(
+                        "DAT camera permission",
+                        "Meta Ray-Ban support is disabled in this W-AI3 Pro build",
+                    )
+                },""",
+)
+main_path.write_text(main_text)
+
 print("AI3 persistence patch applied successfully")
