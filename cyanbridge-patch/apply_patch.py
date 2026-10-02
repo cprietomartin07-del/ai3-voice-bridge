@@ -523,9 +523,10 @@ class CommunityPluginsActivity : AppCompatActivity() {
 # MainActivity has only one direct Meta permission contract; route it through the stub manager.
 main_path = ROOT / "android/CyanBridge/app/src/main/java/com/fersaiyan/cyanbridge/MainActivity.kt"
 main_text = main_path.read_text()
-main_text = main_text.replace("import com.meta.wearable.dat.core.Wearables\\n", "")
-main_text = main_text.replace("import com.meta.wearable.dat.core.types.Permission\\n", "")
-main_text = main_text.replace("import com.meta.wearable.dat.core.types.PermissionStatus\\n", "")
+main_text = "\n".join(
+    line for line in main_text.splitlines()
+    if not line.startswith("import com.meta.wearable.dat.")
+) + "\n"
 start = main_text.find("    private val metaWearablePermissionLauncher =")
 end_marker = '    // Transcription UI moved to the "Transcriptions & recordings" section'
 if start >= 0:
