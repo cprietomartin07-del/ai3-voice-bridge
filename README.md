@@ -14,26 +14,27 @@ Fluxo alvo:
 
 `Hey Cyan / botão AI3 -> CyanBridge -> VOICE_COMMAND -> AI3 Voice Bridge -> AI3_CHATGPT_VOICE -> Samsung Routine -> ChatGPT Voice`
 
-## v1.0.1 - tela bloqueada
+## v1.0.2 - wake + dismiss trusted keyguard
 
-Antes de emitir o sinal, o bridge tenta dispensar o Keyguard usando `KeyguardManager.requestDismissKeyguard()`.
+A v1.0.1 provou que o trigger chegava corretamente ao ChatGPT, mas no Galaxy S24+ o Voice ainda aguardava o desbloqueio manual.
 
-No Galaxy S24+ com o AI3 configurado como dispositivo confiável, o objetivo é permitir:
-
-`Hey Cyan -> dispensar lock screen confiável -> Rotina Samsung -> ChatGPT Voice`
-
-Se o Android/Samsung não permitir a dispensa, o app mantém o fallback anterior e apenas emite o sinal.
+A v1.0.2:
+- executa a Activity transparente acima da lock screen;
+- liga a tela temporariamente com `setTurnScreenOn(true)`;
+- solicita a dispensa do Keyguard somente depois de `onResume()`;
+- mantém `FLAG_DISMISS_KEYGUARD` como compatibilidade adicional para One UI;
+- aguarda a dispensa antes de publicar `AI3_CHATGPT_VOICE`;
+- preserva fallback caso a política do Android/Samsung ainda exija autenticação.
 
 ## Instalação
 
-1. Baixe o APK gerado pelo GitHub Actions.
-2. Instale/atualize no Galaxy S24+.
-3. Abra `AI3 Voice Bridge` uma vez.
-4. Permita notificações.
-5. Em Samsung Modos e Rotinas, mantenha `AI3 Voice Bridge` nos aplicativos monitorados.
-6. Mantenha a palavra-chave `AI3_CHATGPT_VOICE` e a ação `ChatGPT -> Voz`.
-7. Teste primeiro pelo botão físico com a tela bloqueada.
-8. Depois teste `Hey Cyan` com a tela bloqueada.
+1. Atualize o APK no Galaxy S24+.
+2. Abra `AI3 Voice Bridge` uma vez e confirme notificações.
+3. Mantenha a rotina Samsung:
+   - SE: notificação do AI3 Voice Bridge com `AI3_CHATGPT_VOICE`
+   - ENTÃO: `ChatGPT -> Voz`
+4. Teste primeiro o botão físico com a tela bloqueada.
+5. Depois teste `Hey Cyan` com a tela bloqueada.
 
 ## Build
 
