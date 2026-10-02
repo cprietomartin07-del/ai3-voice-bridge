@@ -527,7 +527,7 @@ main_text = main_text.replace("import com.meta.wearable.dat.core.Wearables\\n", 
 main_text = main_text.replace("import com.meta.wearable.dat.core.types.Permission\\n", "")
 main_text = main_text.replace("import com.meta.wearable.dat.core.types.PermissionStatus\\n", "")
 start = main_text.find("    private val metaWearablePermissionLauncher =")
-end_marker = "    // Transcription UI moved to the \\"Transcriptions & recordings\\" section"
+end_marker = '    // Transcription UI moved to the "Transcriptions & recordings" section'
 if start >= 0:
     end = main_text.find(end_marker, start)
     if end < 0:
