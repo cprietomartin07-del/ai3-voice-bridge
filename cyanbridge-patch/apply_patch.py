@@ -376,6 +376,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class MetaRaybanManager private constructor(private val context: Context) {
     companion object {
+        private const val META_DISABLED = "Meta DAT disabled in CyanBridge AI3 build"
         @Volatile private var instance: MetaRaybanManager? = null
         fun getInstance(context: Context): MetaRaybanManager =
             instance ?: synchronized(this) {
@@ -476,9 +477,6 @@ class MetaRaybanManager private constructor(private val context: Context) {
         STOPPED, STARTING, STARTED, STREAMING, STOPPING, PAUSED, CLOSED,
     }
 
-    private companion object Constants {
-        const val META_DISABLED = "Meta DAT disabled in CyanBridge AI3 build"
-    }
 }
 ''')
 
