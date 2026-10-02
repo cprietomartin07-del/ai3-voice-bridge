@@ -154,8 +154,8 @@ import com.fersaiyan.cyanbridge.R
 import com.fersaiyan.cyanbridge.devices.DeviceProfileStore
 import com.fersaiyan.cyanbridge.shared.devices.DeviceClass
 import com.oudmon.ble.base.communication.LargeDataHandler
-import com.oudmon.ble.base.communication.responseImpl.GlassesDeviceNotifyRsp
-import com.oudmon.ble.base.communication.listener.GlassesDeviceNotifyListener
+import com.oudmon.ble.base.communication.bigData.resp.GlassesDeviceNotifyRsp
+import com.oudmon.ble.base.communication.bigData.resp.GlassesDeviceNotifyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -183,7 +183,7 @@ class HeyCyanKeepAliveService : Service() {
             }
 
             Log.i(TAG, "HeyCyan AI trigger received in background service")
-            launchAi3VoiceBridge()
+            notifyAi3VoiceBridge()
         }
     }
 
@@ -214,26 +214,15 @@ class HeyCyanKeepAliveService : Service() {
         return START_STICKY
     }
 
-    private fun launchAi3VoiceBridge() {
-        val intent = Intent(Intent.ACTION_VOICE_COMMAND).apply {
+    private fun notifyAi3VoiceBridge() {
+        val intent = Intent(AI3_BRIDGE_TRIGGER_ACTION).apply {
             setPackage(AI3_BRIDGE_PACKAGE)
-            addCategory(Intent.CATEGORY_DEFAULT)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         runCatching {
-            startActivity(intent)
-        }.onFailure { error ->
-            Log.w(TAG, "AI3 Voice Bridge not available; falling back to generic VOICE_COMMAND", error)
-            runCatching {
-                startActivity(
-                    Intent(Intent.ACTION_VOICE_COMMAND).apply {
-                        addCategory(Intent.CATEGORY_DEFAULT)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                )
-            }.onFailure {
-                Log.e(TAG, "Unable to launch any phone voice command route", it)
-            }
+            sendBroadcast(intent)
+            Log.i(TAG, "AI3 Voice Bridge trigger broadcast sent")
+        }.onFailure {
+            Log.e(TAG, "Unable to notify AI3 Voice Bridge", it)
         }
     }
 
@@ -284,6 +273,7 @@ class HeyCyanKeepAliveService : Service() {
         private const val KEEPALIVE_INTERVAL_MS = 20_000L
         private const val TRIGGER_DEBOUNCE_MS = 1_500L
         private const val AI3_BRIDGE_PACKAGE = "com.cprieto.ai3voicebridge"
+        private const val AI3_BRIDGE_TRIGGER_ACTION = "com.cprieto.ai3voicebridge.TRIGGER"
 
         @Volatile
         private var running = false
