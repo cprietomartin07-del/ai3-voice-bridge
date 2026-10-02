@@ -9,6 +9,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AI3VoiceBridge">
 
+        <receiver
+            android:name=".VoiceTriggerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.cprieto.ai3voicebridge.TRIGGER" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".VoiceCommandActivity"
             android:excludeFromRecents="true"
