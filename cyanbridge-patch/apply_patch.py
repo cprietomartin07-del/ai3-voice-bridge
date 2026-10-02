@@ -3,6 +3,17 @@ from pathlib import Path
 
 ROOT = Path("upstream")
 
+# GitHub-hosted runners can intermittently fail against repo.maven.apache.org.
+# Add Google's Maven Central mirror before building, without removing upstream repositories.
+for rel in ["android/CyanBridge/settings.gradle.kts", "heycyan-core/settings.gradle.kts"]:
+    p = ROOT / rel
+    s = p.read_text()
+    needle = "repositories {\\n        google()\\n        mavenCentral()"
+    repl = "repositories {\\n        google()\\n        maven { url = uri(\\\"https://maven-central.storage-download.googleapis.com/maven2\\\") }\\n        mavenCentral()"
+    # settings files each have pluginManagement and dependencyResolution repositories blocks.
+    s = s.replace(needle, repl)
+    p.write_text(s)
+
 def replace(path, old, new):
     p = ROOT / path
     s = p.read_text()
