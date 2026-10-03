@@ -35,6 +35,15 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "platforms;android-36" "build-tools;35.0.0"
 
+      - name: Prepare stable Android debug signing directory
+        run: mkdir -p ~/.android
+
+      - name: Restore stable CyanBridge debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: cyanbridge-ai3-debug-keystore-v1
+
       - name: Clone pinned CyanBridge upstream
         shell: bash
         run: |
@@ -58,6 +67,6 @@ jobs:
       - name: Upload patched CyanBridge
         uses: actions/upload-artifact@v4
         with:
-          name: cyanbridge-ai3-persistent-debug
+          name: cyanbridge-ai3-persistent-v1-debug
           path: upstream/android/CyanBridge/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
